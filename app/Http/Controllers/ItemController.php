@@ -25,8 +25,10 @@ class ItemController extends Controller
         return response()->json($data);
     }
 
-    public function completed(){
-        
+    public function completed(Request $r){
+        foreach($r->data as $id){
+            // dd($r->data);
+        }
     }
 
     public function delete_checklist($checkId, $itemId){
