@@ -21,8 +21,8 @@ $router->get('/', function () use ($router) {
 });
 
 $router->group(['prefix' => 'checklists'], function () use ($router) {
-        $router->post('/complete', 'ItemController@completed');
-        $router->post('/incomplete', 'ItemController@GetById');
+        // $router->post('/complete', 'ItemController@completed');
+        // $router->post('/incomplete', 'ItemController@GetById');
         $router->post('/{checkId}/items', 'ItemController@create_checklist');
         $router->get('/{checkId}/items/{itemId}', 'ItemController@getChecklistByItemId');
         $router->get('/{checkId}/items/', 'ItemController@getCheckListItems');
