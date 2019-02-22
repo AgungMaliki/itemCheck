@@ -6,6 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Checklist extends Model
 {
-   protected $table = 'checklist'; 
+   protected $table = 'checklists'; 
    public $timestamps = false;
 }

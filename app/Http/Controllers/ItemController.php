@@ -32,27 +32,36 @@ class ItemController extends Controller
     }
 
     public function delete_checklist($checkId, $itemId){
-        $item = Items::where('checklist_id', $checkId)
-        ->where('id', $itemId)->first();
 
-        if(isset($item)){
-            $del = $item->delete();
-            if($del){
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Deleting Items Success!',
-                ], 200);
+        $check = Checklist::find($checkId);
+        if(!$check){
+            return response()->json([
+                'success' => false,
+                'message' => 'Not valid owned checklist ID!',
+            ], 400);
+        }else{
+            $item = Items::where('id', $itemId)
+            ->where('id', $itemId)->first();
+    
+            if(isset($item)){
+                $del = $item->delete();
+                if($del){
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Deleting Items Success!',
+                    ], 200);
+                }else{
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Deleting Items Fails!',
+                    ], 400);
+                }
             }else{
                 return response()->json([
                     'success' => true,
-                    'message' => 'Deleting Items Fails!',
+                    'message' => 'Items Undefined',
                 ], 400);
             }
-        }else{
-            return response()->json([
-                'success' => true,
-                'message' => 'Items Undefined',
-            ], 400);
         }
         
     }
@@ -60,7 +69,7 @@ class ItemController extends Controller
     public function update_checklist(Request $r, $checkId, $itemId){
         $url = URL::current();
         $res = $r->input('data');
-        $data = Items::where('checklist_id', $checkId)
+        $data = Items::where('id', $itemId)
         ->where('id', $itemId);
 
         $updated = $data->update([
@@ -69,7 +78,7 @@ class ItemController extends Controller
             'urgency' => $res['attribute']['urgency'],
         ]);
 
-        $item = Items::where('checklist_id', $checkId)
+        $item = Items::where('id', $checkId)
         ->where('id', $itemId)->first();
 
         if($updated){
@@ -123,13 +132,13 @@ class ItemController extends Controller
         }
     }
 
-    public function getCheckList($checkId){
+    public function getCheckListItems($checkId){
         $url = URL::current();
         $data = Checklist::select('*')
             ->where('id', $checkId)->first();
 
-        $items = Items::select('*')
-            ->where('checklist_id', $checkId)->get();
+        $items = Items::all();
+        $data->items = $items;
 
         if($data->is_completed == 1){
             $data->is_completed = true;
@@ -144,12 +153,34 @@ class ItemController extends Controller
                 'data' => [
                     'type' => 'checklists',
                     'id' => $data->id,
-                    'attributes' => [
-                        'description' => $data->description,
-                        'is_completed' => $data->is_completed,
-                        'due' => $data,
-                        'items' => $items
-                    ],
+                    'attributes' => $data,
+                    'links' => [
+                        'self' => $url
+                    ]
+                ]
+            ], 200);
+        }
+    }
+
+    public function getCheckList($checkId){
+        $url = URL::current();
+        $data = Checklist::select('*')
+            ->where('id', $checkId)->first();
+
+        if($data->is_completed == 1){
+            $data->is_completed = true;
+        }else{
+            $data->is_completed = false;
+        }
+        
+        if($data){
+            return response()->json([
+                'success' => true,
+                'message' => 'Item ditemukan',
+                'data' => [
+                    'type' => 'checklists',
+                    'id' => $data->id,
+                    'attributes' => $data,
                     'links' => [
                         'self' => $url
                     ]
@@ -160,17 +191,23 @@ class ItemController extends Controller
 
     public function getChecklistByItemId($checkId, $itemId){
         $url = URL::current();
-        $data = Items::select('*')
-            ->where('checklist_id', $checkId)
-            ->where('id', $itemId)->first();
+        $checklist = Checklist::select('*')
+            ->where('id', $checkId)->first();
+
         
-        if($data){
+        $items = Items::select('*')
+            ->where('id', $itemId)->first();
+
+        $checklist->items = $items;
+        
+        if($checklist){
             return response()->json([
                 'success' => true,
                 'message' => 'Item ditemukan',
                 'data' => [
                     'type' => 'checklists',
-                    'attributes' => $data,
+                    'id' => $checkId,
+                    'attributes' => $checklist->items,
                     'links' => [
                         'self' => $url
                     ]
