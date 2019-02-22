@@ -25,6 +25,36 @@ class ItemController extends Controller
         return response()->json($data);
     }
 
+    public function completed(){
+        
+    }
+
+    public function delete_checklist($checkId, $itemId){
+        $item = Items::where('checklist_id', $checkId)
+        ->where('id', $itemId)->first();
+
+        if(isset($item)){
+            $del = $item->delete();
+            if($del){
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Deleting Items Success!',
+                ], 200);
+            }else{
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Deleting Items Fails!',
+                ], 400);
+            }
+        }else{
+            return response()->json([
+                'success' => true,
+                'message' => 'Items Undefined',
+            ], 400);
+        }
+        
+    }
+
     public function update_checklist(Request $r, $checkId, $itemId){
         $url = URL::current();
         $res = $r->input('data');
@@ -50,7 +80,7 @@ class ItemController extends Controller
                     'attributes' => $item,
                     'link' => $url
                 ]
-            ], 201);
+            ], 200);
         }else{
             return response()->json([
                 'success' => false,
