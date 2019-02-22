@@ -31,7 +31,40 @@ class ItemController extends Controller
         }
     }
 
-    public function delete_checklist($checkId, $itemId){
+    public function delete_checklist($checkId){
+
+        $check = Checklist::where('id', $checkId)->first();
+        if(!$check){
+            return response()->json([
+                'success' => false,
+                'message' => 'Not valid owned checklist ID!',
+            ], 400);
+        }else{
+            // $check = $check->first();
+            if(isset($check)){
+                $del = $check->delete();
+                if($del){
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Deleting Checklist Success!',
+                    ], 200);
+                }else{
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Deleting Checklist Fails!',
+                    ], 400);
+                }
+            }else{
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Checklist Undefined',
+                ], 400);
+            }
+        }
+        
+    }
+
+    public function delete_checklist_item($checkId, $itemId){
 
         $check = Checklist::find($checkId);
         if(!$check){
@@ -66,11 +99,59 @@ class ItemController extends Controller
         
     }
 
-    public function update_checklist(Request $r, $checkId, $itemId){
+    public function update(Request $r, $checkId){
+        $check = Checklist::where('id', $checkId)->first();
+        
+        if(!$check){
+            return response()->json([
+                'success' => false,
+                'message' => 'Not valid owned checklist ID!',
+            ], 400);
+        }
+
         $url = URL::current();
         $res = $r->input('data');
-        $data = Items::where('id', $itemId)
-        ->where('id', $itemId);
+        $data = Checklist::where('id', $checkId);
+
+        $updated = $data->update([
+            'object_domain' => $res['attributes']['object_domain'],
+            'object_id' => $res['attributes']['object_id'],
+            'description' => $res['attributes']['description'],
+        ]);
+
+        if($updated){
+            return response()->json([
+                'success' => true,
+                'message' => 'Updating Checklists Success!',
+                'data' => [
+                    'type' => 'checklist',
+                    'id' => $checkId,
+                    'attributes' => $check,
+                    'link' => $url
+                ]
+            ], 200);
+        }else{
+            return response()->json([
+                'success' => false,
+                'message' => 'Updating Checklists Fail!',
+                'data' => ''
+            ], 400);
+        }
+    }
+
+    public function update_checklist(Request $r, $checkId, $itemId){
+        $check = Checklist::where('id', $checkId)->first();
+        
+        if(!$check){
+            return response()->json([
+                'success' => false,
+                'message' => 'Not valid owned checklist ID!',
+            ], 400);
+        }
+
+        $url = URL::current();
+        $res = $r->input('data');
+        $data = Items::where('id', $itemId);
 
         $updated = $data->update([
             'description' => $res['attribute']['description'],
@@ -78,8 +159,7 @@ class ItemController extends Controller
             'urgency' => $res['attribute']['urgency'],
         ]);
 
-        $item = Items::where('id', $checkId)
-        ->where('id', $itemId)->first();
+        $item = Items::where('id', $itemId)->first();
 
         if($updated){
             return response()->json([
@@ -101,6 +181,36 @@ class ItemController extends Controller
         }
     }
 
+    public function storeChecklist(Request $r){
+        $url = URL::current();
+        $data = $r->input('data');
+        $checklist = new Checklist;
+        $checklist->object_domain = $data['attributes']['object_domain'];
+        $checklist->object_id = $data['attributes']['object_id'];
+        $checklist->description = $data['attributes']['description'];
+        $checklist->due = isset($data['attributes']['due']) ? $data['attributes']['due'] : '';
+        $checklist->urgency = isset($data['attributes']['urgency']) ? $data['attributes']['urgency'] : '1';
+        $checklist->save();
+        if($checklist){
+            return response()->json([
+                'success' => true,
+                'message' => 'Adding checklist Success!',
+                'data' => [
+                    'type' => 'checklist',
+                    'id' => $checklist->id,
+                    'attributes' => $checklist,
+                    'link' => $url
+                ]
+            ], 201);
+        }else{
+            return response()->json([
+                'success' => false,
+                'message' => 'Adding checklist Fail!',
+                'data' => ''
+            ], 400);
+        }
+    }
+
     public function create_checklist(Request $r){
         $url = URL::current();
         $data = $r->input('data');
@@ -108,8 +218,7 @@ class ItemController extends Controller
         $items->description = $data['attribute']['description'];
         $items->due = $data['attribute']['due'];
         $items->urgency = $data['attribute']['due'];
-        $items->is_completed = '0';
-        $items->checklist_id = '0';
+        $items->is_completed = false;
         $items->urgency = '0';
         $items->save();
         if($items){
@@ -136,6 +245,13 @@ class ItemController extends Controller
         $url = URL::current();
         $data = Checklist::select('*')
             ->where('id', $checkId)->first();
+
+        if(!$data){
+            return response()->json([
+                'success' => false,
+                'message' => 'Not valid owned checklist ID!',
+            ], 400);
+        }
 
         $items = Items::all();
         $data->items = $items;
@@ -167,6 +283,13 @@ class ItemController extends Controller
         $data = Checklist::select('*')
             ->where('id', $checkId)->first();
 
+        if(!$data){
+            return response()->json([
+                'success' => false,
+                'message' => 'Not valid owned checklist ID!',
+            ], 400);
+        }
+
         if($data->is_completed == 1){
             $data->is_completed = true;
         }else{
@@ -193,7 +316,12 @@ class ItemController extends Controller
         $url = URL::current();
         $checklist = Checklist::select('*')
             ->where('id', $checkId)->first();
-
+        if(!$checklist){
+            return response()->json([
+                'success' => false,
+                'message' => 'Not valid owned checklist ID!',
+            ], 400);
+        }
         
         $items = Items::select('*')
             ->where('id', $itemId)->first();

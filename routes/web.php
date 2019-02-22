@@ -26,9 +26,16 @@ $router->group(['prefix' => 'checklists'], function () use ($router) {
         $router->post('/{checkId}/items', 'ItemController@create_checklist');
         $router->get('/{checkId}/items/{itemId}', 'ItemController@getChecklistByItemId');
         $router->get('/{checkId}/items/', 'ItemController@getCheckListItems');
-        $router->get('/{checkId}', 'ItemController@getCheckList');
         $router->patch('/{checkId}/items/{itemId}', 'ItemController@update_checklist');
-        $router->delete('/{checkId}/items/{itemId}', 'ItemController@delete_checklist');
+        $router->delete('/{checkId}/items/{itemId}', 'ItemController@delete_checklist_item');
+       
+       
+        // checklists
+        $router->get('/{checkId}', 'ItemController@getCheckList');
+        $router->post('/', 'ItemController@storeChecklist');
+        $router->patch('/{checkId}', 'ItemController@update');
+        $router->delete('/{checkId}', 'ItemController@delete_checklist');
+
 });
 
 $router->get('/items/{id}', 'ItemController@GetById');
